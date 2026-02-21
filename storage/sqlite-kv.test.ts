@@ -251,6 +251,23 @@ describe('SqliteKVStorage', () => {
       expect(await storage.get('key199')).toBe('value199');
     });
 
+    it('should return failed keys when transaction throws', async () => {
+      // Drop the table to cause the prepared statement to fail during transaction execution
+      db.exec('DROP TABLE "test_table"');
+
+      const entries = [
+        { key: 'key1', value: 'value1' },
+        { key: 'key2', value: 'value2' },
+      ];
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await storage.putMultiple(entries);
+
+      expect(result).toEqual(['key1', 'key2']);
+      expect(consoleSpy).toHaveBeenCalledWith('SQLite bulk put failed:', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
     it('should overwrite existing keys in batch', async () => {
       await storage.put('key1', 'old-value');
 
@@ -316,6 +333,18 @@ describe('SqliteKVStorage', () => {
 
       expect(result).toEqual([]);
       expect(await storage.get('key1')).toBeNull();
+    });
+
+    it('should return failed keys when delete transaction throws', async () => {
+      // Drop the table to cause the prepared statement to fail during transaction execution
+      db.exec('DROP TABLE "test_table"');
+
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const result = await storage.deleteMultiple(['key1', 'key2']);
+
+      expect(result).toEqual(['key1', 'key2']);
+      expect(consoleSpy).toHaveBeenCalledWith('SQLite bulk delete failed:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
 
     it('should handle large batch deletes', async () => {
