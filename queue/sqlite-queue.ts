@@ -92,7 +92,7 @@ export class SqliteQueue implements Queue {
  */
 export class SqliteQueueProvider implements QueueProvider {
   private writeQueue: SqliteQueue;
-  private processingInterval: ReturnType<typeof setInterval> | null = null;
+  private processingInterval: ReturnType<typeof globalThis.setInterval> | null = null;
   private processing = false;
   private serverUrl = '';
   private apiSecret = '';
@@ -115,7 +115,7 @@ export class SqliteQueueProvider implements QueueProvider {
 
     console.log(`Starting SQLite queue processor (poll interval: ${pollIntervalMs}ms)`);
 
-    this.processingInterval = setInterval(async () => {
+    this.processingInterval = globalThis.setInterval(async () => {
       if (this.processing) return; // Skip if still processing previous batch
       this.processing = true;
 
@@ -134,7 +134,7 @@ export class SqliteQueueProvider implements QueueProvider {
    */
   stopProcessing(): void {
     if (this.processingInterval) {
-      clearInterval(this.processingInterval);
+      globalThis.clearInterval(this.processingInterval);
       this.processingInterval = null;
     }
     console.log('SQLite queue processor stopped');
